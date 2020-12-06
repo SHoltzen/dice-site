@@ -2,17 +2,90 @@
 layout: default
 ---
 
-<div class="posts">
-  {% for post in site.posts %}
-    <article class="post">
+<p>
+<code>dice</code> is a probabilistic programming language focused on fast exact inference
+for discrete probabilistic programs.
+For more information on <code>dice</code>, see the <a href="{{ site.baseurl }}about">about page</a>
+or <a href="https://arxiv.org/abs/2005.09089">paper</a>.
+</p>
 
-      <h1><a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></h1>
 
-      <div class="entry">
-        {{ post.excerpt }}
-      </div>
+<p>
+Below is an online <code>dice</code> code demo. To run the example code, press
+    the "Run" button. This will print the posterior probability of the
+    encryption key used by a Caesar cipher given the observed string "CCCC".
+</p><p>
+    Note that <code>dice</code> is still under active
+    development, so there is always a chance of bugs: please help us by
+    reporting them on <a
+    href="https://github.com/SHoltzen/dice/issues">github</a>!
+</p>
 
-      <a href="{{ site.baseurl }}{{ post.url }}" class="read-more">Read More</a>
-    </article>
-  {% endfor %}
+<div style="margin-top: 10px">
+    <button style="float: right" id="run">Run</button>
+    <div id="editor">fun sendChar(key: int(2), observation: int(2)) {
+   let gen = discrete(0.5, 0.25, 0.125, 0.125) in    // sample a FooLang character
+   let enc = key + gen in                            // encrypt the character
+   observe observation == enc
+}
+
+// sample a uniform random key: A=0, B=1, C=2, D=3
+let key = discrete(0.25, 0.25, 0.25, 0.25) in
+// observe the ciphertext CCCC
+let tmp = sendChar(key, int(2, 2)) in
+let tmp = sendChar(key, int(2, 2)) in
+let tmp = sendChar(key, int(2, 2)) in
+let tmp = sendChar(key, int(2, 2)) in
+key
 </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q==" crossorigin="anonymous"></script>
+    <script>
+     var editor = ace.edit("editor");
+     /* editor.setTheme("ace/theme/monokai"); */
+     editor.session.setMode("ace/mode/ocaml");
+    </script>
+    <div id="results"></div>
+    <div id="error"></div>
+<div>
+
+<script>
+    $( "#run" ).click(function() {
+    $.ajax ({
+    crossDomain: true,
+    type: "POST",
+    url: "https://dice-rt7jygcdjq-uw.a.run.app",
+    contentType: "application/json",
+    dataType: "json",
+    data: JSON.stringify({"program": editor.getValue()}),
+    success: function(data, status) {
+             $("#results").html("");
+             $("#error").html("");
+             var parsed = JSON.parse(data);
+             if(parsed[0]["error"]) {
+                 $("#error").html('<div class="alert alert-danger"><h4 class="alert-heading">Error</h4>' + parsed[0]["error"] + "</div>");
+             } else {
+    let r = parsed[0]["Joint Distribution"];
+    var s = "";
+    s += "<div><h4 class='alert-heading'>Joint Distribution</h4>";
+    s += '<table class="table table-success">';
+    s += '<thead><tr><th>' + r[0][0] + '</th><th>' + r[0][1] + '</th></tr></thead><tbody>';
+    for(row = 1; row < r.length; row++) {
+      s += '<tr>';
+      for(col = 0; col <= s[row].length; col++) {
+        s += '<td>' + r[row][col] + '</td>';
+      }
+      s += '</tr>';
+    }
+    s += '</tbody></table></div>';
+    $("#results").html(s);
+             }
+         },
+         error: function(x, error, y) {
+             alert(error)
+         }
+     });
+ });
+
+</script>
+

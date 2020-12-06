@@ -1,0 +1,301 @@
+I"³H<p><code class="language-plaintext highlighter-rouge">dice</code> is a probabilistic programming language focused on <em>fast exact inference</em>
+for <em>discrete</em> probabilistic programs. For more information for how <code class="language-plaintext highlighter-rouge">dice</code> works
+see the research article <a href="https://arxiv.org/abs/2005.09089">here</a>. To cite
+<code class="language-plaintext highlighter-rouge">dice</code>, please use:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@article{holtzen2020dice,
+  title={Scaling Exact Inference for Discrete Probabilistic Programs},
+  author={Holtzen, Steven and {Van den Broeck}, Guy and Millstein, Todd},
+  journal={Proc. ACM Program. Lang. (OOPSLA)},
+  publisher={ACM},
+  doi={https://doi.org/10.1145/342820},
+  year={2020}
+}
+</code></pre></div></div>
+
+<h1 id="quick-start">Quick Start</h1>
+
+<p>We will start with a very simple example. Imagine you have two (unfair) coins
+labeled <code class="language-plaintext highlighter-rouge">a</code> and <code class="language-plaintext highlighter-rouge">b</code>. Coin <code class="language-plaintext highlighter-rouge">a</code> has a 30% probability of landing on heads, and
+coin <code class="language-plaintext highlighter-rouge">b</code> has a 80% chance of landing on heads. You flip both coins and observe
+that one of them lands heads-side up. What is the probability that 
+coin <code class="language-plaintext highlighter-rouge">a</code> landed heads-side up?</p>
+
+<p>We can encode this scenario in <code class="language-plaintext highlighter-rouge">dice</code> as the following program:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>let a = flip 0.3 in 
+let b = flip 0.8 in
+let tmp = observe a || b in 
+a
+</code></pre></div></div>
+
+<p>The syntax of <code class="language-plaintext highlighter-rouge">dice</code> is similar to OCaml. Breaking down the elements of this
+program:</p>
+
+<ul>
+  <li>The expression <code class="language-plaintext highlighter-rouge">let x = e1 in e2</code> creates a local variable <code class="language-plaintext highlighter-rouge">x</code> with value
+specified by <code class="language-plaintext highlighter-rouge">e1</code> and makes it available inside of <code class="language-plaintext highlighter-rouge">e2</code>.</li>
+  <li>The expression <code class="language-plaintext highlighter-rouge">flip 0.3</code> is true with probability 0.3 and false with
+probability 0.8. This is how we model our coin flips: a value of true 
+represents a coin landing heads-side up in this case.</li>
+  <li>The expression <code class="language-plaintext highlighter-rouge">observe a || b</code> conditions either <code class="language-plaintext highlighter-rouge">a</code> or <code class="language-plaintext highlighter-rouge">b</code> to be true. This
+expression returns <code class="language-plaintext highlighter-rouge">true</code>. <code class="language-plaintext highlighter-rouge">dice</code> supports logical conjunction (<code class="language-plaintext highlighter-rouge">||</code>),
+conjunction (<code class="language-plaintext highlighter-rouge">&amp;&amp;</code>), equality (<code class="language-plaintext highlighter-rouge">&lt;=&gt;</code>), negation (<code class="language-plaintext highlighter-rouge">!</code>), and exclusive-or (<code class="language-plaintext highlighter-rouge">^</code>).</li>
+  <li>The program returns <code class="language-plaintext highlighter-rouge">a</code>.</li>
+</ul>
+
+<p>You can find this program in <code class="language-plaintext highlighter-rouge">resources/example.dice</code>, and then you can run it
+by using the <code class="language-plaintext highlighter-rouge">dice</code> executable:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt; dice resources/example.dice
+Value	Probability
+true	0.348837
+false	0.651163
+</code></pre></div></div>
+
+<p>This output shows that <code class="language-plaintext highlighter-rouge">a</code> has a 34.8837% chance of landing on heads.</p>
+
+<h2 id="datatypes">Datatypes</h2>
+<p>In addition to Booleans, <code class="language-plaintext highlighter-rouge">dice</code> supports integers and tuples.</p>
+
+<h3 id="tuples">Tuples</h3>
+
+<p>Tuples are pairs of values. The following simple example shows tuples being
+used:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>let a = (flip 0.3, (flip 0.8, false)) in
+fst (snd a)
+</code></pre></div></div>
+
+<p>Breaking this program down:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">(flip 0.3, (flip 0.8, false))</code> creates a tuple.</li>
+  <li><code class="language-plaintext highlighter-rouge">snd e</code> and <code class="language-plaintext highlighter-rouge">fst e</code> access the first and second element of <code class="language-plaintext highlighter-rouge">e</code> respectively.</li>
+</ul>
+
+<p>Running this program:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt; dice resources/tuple-ex.dice
+Value	Probability
+true	0.800000
+false	0.200000
+</code></pre></div></div>
+
+<h3 id="unsigned-integers">Unsigned Integers</h3>
+
+<p><code class="language-plaintext highlighter-rouge">dice</code> supports distributions over unsigned integers. An example program:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>let x = discrete(0.4, 0.1, 0.5) in 
+let y = int(2, 1) in 
+x + y
+</code></pre></div></div>
+
+<p>Breaking this program down:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">discrete(0.4, 0.1, 0.5)</code> creates a random integer that is 0 with probability 0.4, 
+ 1 with probability 0.1, and 2 with probability 0.3.</li>
+  <li><code class="language-plaintext highlighter-rouge">int(2, 1)</code> creates a 2-bit integer constant with value 1. All integer
+constants in <code class="language-plaintext highlighter-rouge">dice</code> must specify their size.</li>
+  <li><code class="language-plaintext highlighter-rouge">x + y</code> adds <code class="language-plaintext highlighter-rouge">x</code> and <code class="language-plaintext highlighter-rouge">y</code> together. All integer operations in <code class="language-plaintext highlighter-rouge">dice</code> are
+performed modulo the size (i.e., <code class="language-plaintext highlighter-rouge">x + y</code> is implicitly modulo 3 in this
+case). <code class="language-plaintext highlighter-rouge">dice</code> supports the following integer operations: <code class="language-plaintext highlighter-rouge">+</code>, <code class="language-plaintext highlighter-rouge">*</code>, <code class="language-plaintext highlighter-rouge">/</code>, <code class="language-plaintext highlighter-rouge">-</code>, 
+<code class="language-plaintext highlighter-rouge">==</code>, <code class="language-plaintext highlighter-rouge">!=</code>, <code class="language-plaintext highlighter-rouge">&lt;</code>, <code class="language-plaintext highlighter-rouge">&lt;=</code>, <code class="language-plaintext highlighter-rouge">&gt;</code>, <code class="language-plaintext highlighter-rouge">&gt;=</code>.</li>
+</ul>
+
+<p>Running this program:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt; dice resources/int-ex.dice
+Value	Probability
+0	0.500000
+1	0.400000
+2	0.100000
+</code></pre></div></div>
+
+<h2 id="functions">Functions</h2>
+
+<p><code class="language-plaintext highlighter-rouge">dice</code> supports functions for reusing code. A key feature of <code class="language-plaintext highlighter-rouge">dice</code> is that 
+functions are <em>compiled once and then reused</em> during inference.</p>
+
+<p>A simple example program:</p>
+
+<div class="language-ocaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">fun</span> <span class="n">conjoinall</span><span class="p">(</span><span class="n">a</span><span class="o">:</span> <span class="kt">bool</span><span class="o">,</span> <span class="n">b</span><span class="o">:</span> <span class="p">(</span><span class="kt">bool</span><span class="o">,</span> <span class="kt">bool</span><span class="p">))</span> <span class="p">{</span>
+  <span class="n">a</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">fst</span> <span class="n">b</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">snd</span> <span class="n">b</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="n">conjoinall</span><span class="p">(</span><span class="n">flip</span> <span class="mi">0</span><span class="o">.</span><span class="mi">5</span><span class="o">,</span> <span class="p">(</span><span class="n">flip</span> <span class="mi">0</span><span class="o">.</span><span class="mi">1</span><span class="o">,</span> <span class="bp">true</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>Breaking this program down:</p>
+
+<ul>
+  <li>A function is declared using the syntax <code class="language-plaintext highlighter-rouge">fun name(arg1: type1, arg2: type2, ...) { body }</code>.</li>
+  <li>A program starts by listing all of its functions. Then, the program has a main body after
+the functions that is run when the program is executed. In this program, the main 
+body is <code class="language-plaintext highlighter-rouge">conjoinall(flip 0.5, (flip 0.1, true))</code>.</li>
+  <li>Right now recursion is not supported.</li>
+  <li>Functions do not have <code class="language-plaintext highlighter-rouge">return</code> statements; they simply return whatever the
+last expression that evaluated returns.</li>
+</ul>
+
+<p>Result of running this program:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Value	Probability
+true	0.050000
+false	0.950000
+</code></pre></div></div>
+
+<h2 id="caesar-cipher">Caesar Cipher</h2>
+
+<p>Here is a more complicated example that shows how to use many <code class="language-plaintext highlighter-rouge">dice</code> features
+together to model a complicated problem.
+We will decrypt text that was
+encrypted using a <a href="http://practicalcryptography.com/ciphers/caesar-cipher/">Caesar cipher</a>. We can decrypt
+text that was encrypted using a Caesar cipher by <a href="https://en.wikipedia.org/wiki/Frequency_analysis">frequency analysis</a>:
+using our knowledge of the rate at which English characters are typically in order to 
+infer what the underlying key must be.</p>
+
+<p>Consider the following simplified scenario. Suppose we have a 4-letter language called <code class="language-plaintext highlighter-rouge">FooLang</code>
+consisting of the letters <code class="language-plaintext highlighter-rouge">A</code>, <code class="language-plaintext highlighter-rouge">B</code>, <code class="language-plaintext highlighter-rouge">C</code>, and <code class="language-plaintext highlighter-rouge">D</code>. Suppose that for this language,
+the letter <code class="language-plaintext highlighter-rouge">A</code> is used 50% of the time when spelling a word, <code class="language-plaintext highlighter-rouge">B</code> is used 25% of the
+time, and <code class="language-plaintext highlighter-rouge">C</code> and <code class="language-plaintext highlighter-rouge">D</code> are both used 12.5% of the time.</p>
+
+<p>Now, we want to infer the most likely key given after seeing some encrypted
+text, using knowledge of the underlying frequency of letter usage. Initially we
+assume that all keys are equally likely. Then, we observe some encrypted text:
+say the string <code class="language-plaintext highlighter-rouge">CCCC</code>. Intuitively, the most likely key should be 2: since <code class="language-plaintext highlighter-rouge">A</code>
+is the most common letter, the string <code class="language-plaintext highlighter-rouge">CCCC</code> is most likely the encrypted string
+<code class="language-plaintext highlighter-rouge">AAAA</code>. Letâ€™s use <code class="language-plaintext highlighter-rouge">dice</code> to model this.</p>
+
+<p>The following program models this scenario in <code class="language-plaintext highlighter-rouge">dice</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>fun sendChar(key: int(2), observation: int(2)) {
+  let gen = discrete(0.5, 0.25, 0.125, 0.125) in    // sample a FooLang character
+  let enc = key + gen in                            // encrypt the character
+  observe observation == enc
+}
+// sample a uniform random key: A=0, B=1, C=2, D=3
+let key = discrete(0.25, 0.25, 0.25, 0.25) in
+// observe the ciphertext CCCC
+let tmp = sendChar(key, int(2, 2)) in
+let tmp = sendChar(key, int(2, 2)) in
+let tmp = sendChar(key, int(2, 2)) in
+let tmp = sendChar(key, int(2, 2)) in
+key
+</code></pre></div></div>
+
+<p>Now we break this down. First we look at the <code class="language-plaintext highlighter-rouge">sendChar</code> function:</p>
+
+<ul>
+  <li>It takes two arguments: <code class="language-plaintext highlighter-rouge">key</code>, which is the underlying secret encryption key, and
+<code class="language-plaintext highlighter-rouge">observation</code>, which is the observed ciphertext.</li>
+  <li>The characters <code class="language-plaintext highlighter-rouge">A,B,C,D</code> are encoded as integers.</li>
+  <li>A random character <code class="language-plaintext highlighter-rouge">gen</code> is sampled according to the underlying distribution
+of characters in <code class="language-plaintext highlighter-rouge">FooLang</code>.</li>
+  <li>Then, <code class="language-plaintext highlighter-rouge">gen</code> is encrypted by adding the key (remember, addition occurs modulo 4
+here).</li>
+  <li>Then, ciphertext character is observed to be equal to the encrypted character.</li>
+</ul>
+
+<p>Next, in the main program body, we sample a uniform random key and encrypt the
+string <code class="language-plaintext highlighter-rouge">CCCC</code>. Running this program:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt; dice resources/caesar-ex.dice
+Value	Probability
+0	0.003650
+1	0.058394
+2	0.934307
+3	0.003650
+</code></pre></div></div>
+
+<p>This matches our intuition that <code class="language-plaintext highlighter-rouge">2</code> is the most likely key.</p>
+
+<h2 id="more-examples">More Examples</h2>
+
+<p>More example <code class="language-plaintext highlighter-rouge">dice</code> programs can be found in the source directories:</p>
+
+<ul>
+  <li>The <code class="language-plaintext highlighter-rouge">test/Test.ml</code> file contains many test case programs.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">benchmarks/</code> directory contains example programs that are run during
+benchmarks.</li>
+</ul>
+
+<h1 id="syntax">Syntax</h1>
+
+<p>The parser for <code class="language-plaintext highlighter-rouge">dice</code> is written in <a href="http://gallium.inria.fr/~fpottier/menhir/">menhir</a> and can be found in <code class="language-plaintext highlighter-rouge">lib/Parser.mly</code>. The
+complete syntax for <code class="language-plaintext highlighter-rouge">dice</code> in is:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ident := ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_']*
+binop := +, -, *, /, &lt;, &lt;=, &gt;, &gt;=, ==, !=, &amp;&amp;, ||, &lt;=&gt;, ^
+
+expr := 
+   (expr)
+   | true
+   | false
+   | int (size, value)
+   | discrete(list_of_probabilities) 
+   | expr &lt;binop&gt; expr
+   | (expr, expr)
+   | fst expr
+   | snd expr
+   | ! expr
+   | flip probability
+   | observe expr
+   | if expr then expr else expr
+   | let ident = expr in expr
+
+type := bool | (type, type) | int(size)
+arg := ident: type
+function := fun name(arg1, ...) { expr }
+
+program := expr 
+        | function program
+</code></pre></div></div>
+
+<!-- # Contributors -->
+
+<!-- The following individuals have contributed to the development of `dice`: -->
+
+<!-- * [Steven Holtzen]() -->
+
+<h1 id="local-installation">Local Installation</h1>
+
+<p>The web version will likely be much slower than running <code class="language-plaintext highlighter-rouge">dice</code> natively. These
+instructions tell you how to install <code class="language-plaintext highlighter-rouge">dice</code> on your local machine.</p>
+
+<h2 id="docker">Docker</h2>
+
+<p>A <a href="https://www.docker.com/">docker</a> image is available, and can be installed
+with:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker pull sholtzen/dice
+</code></pre></div></div>
+
+<h2 id="building-from-source">Building From Source</h2>
+<p>First install <code class="language-plaintext highlighter-rouge">opam</code> (version 2.0 or higher) following the instructions
+<a href="https://opam.ocaml.org/doc/Install.html">here</a>. Then, run the following in your
+terminal:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>opam init   # must be performed before installing opam packages
+opam switch create 4.09.0  # switch to use OCaml version 4.09
+eval `opam config env`     # optional: add this line to your .bashrc
+opam depext mlcuddidl      # install external dependencies
+opam pin add dice git+https://github.com/SHoltzen/dice.git#master  # Install dice
+</code></pre></div></div>
+
+<p>This command will download the necessary dependencies and place the <code class="language-plaintext highlighter-rouge">dice</code> and
+<code class="language-plaintext highlighter-rouge">dicebench</code> executables in your path. (If they are not found, try evaluating <code class="language-plaintext highlighter-rouge">opam
+config env</code> again).</p>
+
+<h3 id="building">Building</h3>
+
+<p>First follow the steps for installation. Then, the following build commands are
+available:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">dune build</code>: builds the project from source in the current directory.</li>
+  <li><code class="language-plaintext highlighter-rouge">dune exec dice</code>: runs the <code class="language-plaintext highlighter-rouge">dice</code> executable.</li>
+  <li><code class="language-plaintext highlighter-rouge">dune test</code>: runs the test suite</li>
+  <li><code class="language-plaintext highlighter-rouge">dune exec dicebench</code>: runs the benchmark suite.</li>
+</ul>
+
+:ET

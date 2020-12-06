@@ -12,6 +12,15 @@
     <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}/style.css" />
     <link rel="alternate" type="application/rss+xml" title="{{ site.name }} - {{ site.description }}" href="{{ site.baseurl }}/feed.xml" />
 
+
+    <style type="text/css" media="screen">
+     #editor {
+        width: 100%;
+        height: 400px;
+        position:relative;
+     }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.js" integrity="sha512-WNLxfP/8cVYL9sj8Jnp6et0BkubLP31jhTG9vhL/F5uEZmg5wEzKoXp1kJslzPQWwPT1eyMiSxlKCgzHLOTOTQ==" crossorigin="anonymous"></script>
     <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now -->
   </head>
 
@@ -27,8 +36,10 @@
           </div>
 
           <nav>
-            <a href="{{ site.baseurl }}/">Blog</a>
+              <!-- <a href="{{ site.baseurl }}/">Blog</a> -->
             <a href="{{ site.baseurl }}/about">About</a>
+            <a href="https://github.com/SHoltzen/dice">GitHub</a>
+            <a href="https://arxiv.org/abs/2005.09089">Paper</a>
           </nav>
         </header>
       </div>
@@ -36,14 +47,14 @@
 
     <div id="main" role="main" class="container">
       {{ content }}
-    </div>
+
+
 
     <div class="wrapper-footer">
-      <div class="container">
+        <!-- <div class="container"> -->
         <footer class="footer">
-          {% include svg-icons.html %}
         </footer>
-      </div>
+        <!-- </div> -->
     </div>
 
     {% include analytics.html %}
